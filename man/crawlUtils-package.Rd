@@ -12,8 +12,8 @@ for analysis of animal telemetry data.
 \tabular{ll}{
 Package: \tab crawlUtils\cr
 Type: \tab Package\cr
-Version: \tab 0.0.0.9001\cr
-Date: \tab June 8, 2023\cr
+Version: \tab 0.0.0.9002\cr
+Date: \tab June 9, 2023\cr
 License: \tab CC0 \cr
 LazyLoad: \tab yes\cr
 }

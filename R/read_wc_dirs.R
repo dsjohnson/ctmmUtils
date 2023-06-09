@@ -2,7 +2,7 @@
 #' @description Read and combine data downloaded from Wildlife Computers portal
 #' into individual directories.
 #' @param x Directory containing the individual telemetry data directories.
-#' @param remove_duplicates Locgical. Should observations with duplicated times be removed? The observation
+#' @param remove_duplicates Logical. Should observations with duplicated times be removed? The observation
 #' with the highest quality will be retained.
 #' @export
 #' @author Devin S. Johnson, Josh M. London

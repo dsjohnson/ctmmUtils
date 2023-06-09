@@ -6,8 +6,8 @@
 #' \tabular{ll}{
 #' Package: \tab crawlUtils\cr
 #' Type: \tab Package\cr
-#' Version: \tab 0.0.0.9001\cr
-#' Date: \tab June 8, 2023\cr
+#' Version: \tab 0.0.0.9003\cr
+#' Date: \tab June 9, 2023\cr
 #' License: \tab CC0 \cr
 #' LazyLoad: \tab yes\cr
 #' }
@@ -41,6 +41,18 @@ NULL
   packageStartupMessage(
     paste(package, version, paste("(",date, ")", sep=""))
   )
+}
+
+
+#' @importFrom methods is
+check_telem <- function(data){
+  chk <- FALSE
+  if(!is(data, "telemetry") & is(data,"list")){
+    chk <- all(sapply(data, is,  "telemetry"))
+  } else{
+    out <- is(data,"telemetry")
+  }
+  return(chk)
 }
 
 #' @import dplyr
