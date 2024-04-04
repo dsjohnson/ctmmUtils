@@ -6,8 +6,8 @@
 #' \tabular{ll}{
 #' Package: \tab crawlUtils\cr
 #' Type: \tab Package\cr
-#' Version: \tab 0.0.0.9003\cr
-#' Date: \tab June 9, 2023\cr
+#' Version: \tab 0.0.0.9006\cr
+#' Date: \tab April 4, 2024\cr
 #' License: \tab CC0 \cr
 #' LazyLoad: \tab yes\cr
 #' }
@@ -24,11 +24,10 @@
 #'
 #' @name crawlUtils-package
 #' @aliases crawlUtils-package crawlUtils
-#' @docType package
 #' @author Devin S. Johnson and Josh M. London
 #' Maintainer: Devin S. Johnson <devin.johnson@@noaa.gov>
 #'
-NULL
+"_PACKAGE"
 
 
 
@@ -50,25 +49,43 @@ check_telem <- function(data){
   if(!is(data, "telemetry") & is(data,"list")){
     chk <- all(sapply(data, is,  "telemetry"))
   } else{
-    out <- is(data,"telemetry")
+    chk <- is(data,"telemetry")
   }
   return(chk)
 }
 
 #' @import dplyr
 rm_dup <- function(x){
-  deploy_id <- datetime <- quality <- NULL
+  individual.local.identifier <- timestamp <- quality <- NULL
   x <- x |>
-    group_by(deploy_id) |>
-    arrange(datetime, quality) |>
+    group_by(individual.local.identifier) |>
+    arrange(timestamp, quality) |>
     mutate(
       rank = 1L,
-      rank = case_when(duplicated(datetime, fromLast = FALSE) ~
-                         lag(rank) + 1L, TRUE ~ rank)) |>
+      rank = case_when(
+        duplicated(timestamp, fromLast = FALSE) ~ lag(rank) + 1L,
+        TRUE ~ rank)
+      ) |>
     dplyr::filter(rank == 1) |>
     ungroup() |>
-    arrange(deploy_id, datetime)
+    arrange(individual.local.identifier, timestamp)
 }
+
+#' @import dplyr
+rm_dup0 <- function(x){
+  timestamp <- quality <- NULL
+  x <- x |>
+    arrange(timestamp, quality) |>
+    mutate(
+      rank = 1L,
+      rank = case_when(
+        duplicated(timestamp, fromLast = FALSE) ~ lag(rank) + 1L,
+        TRUE ~ rank)
+    ) |>
+    dplyr::filter(rank == 1) |>
+    arrange(timestamp)
+}
+
 
 # rename_geometry <- function(g, name){
 #   current = attr(g, "sf_column")

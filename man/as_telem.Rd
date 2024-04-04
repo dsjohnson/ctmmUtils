@@ -6,10 +6,10 @@
 `\link[ctmmUtils]{read_wc_dirs}` to a `telemetry` object from the
 `ctmm` package.}
 \usage{
-as_telem(locs_df, ...)
+as_telem(x, ...)
 }
 \arguments{
-\item{locs_df}{A data frame output by the function `\link[ctmmUtils]{read_wc_dirs}`}
+\item{x}{An sf data frame output by the function `\link[ctmmUtils]{read_wc_dirs}`.}
 
 \item{...}{Additional arguments to be passed to `\link{ctmm}{as.temeletry}`}
 }

@@ -22,27 +22,33 @@
 #' @importFrom stats coef dist predict vcov
 #' @importFrom methods is
 #' @importFrom ctmm as.sf
-#'
 migration_det <- function(data, min_disp, max_num_mig=1, min_phase_len=3,
                           grid_res="day", base="first", max_k=100){
-  if(!check_telem(data)) stop("'data' does not appear to be a 'telemetry' data object.")
-  mult_anim <- !is(data, "telemetry") & is(data, "list")
-  if(mult_anim){
-    timestamp <- lapply(data, \(x) x$timestamp)
-    data <- lapply(data, ctmm::as.sf)
-    for(i in 1:length(data)){data[[i]]$timestamp <- timestamp[[i]]}
-    mig_tbl <- lapply(data, migration_det0, min_disp=min_disp,
-                      max_num_mig=max_num_mig, min_phase_len=min_phase_len,
-                      grid_res=grid_res,base= base, max_k=max_k)
-    names(mig_tbl) <- names(data)
+  individual.local.identifier <- NULL
+
+  mult_anim <- TRUE
+  if(!"individual.local.identifier" %in% colnames(data)){
+    mult_anim <- FALSE
   } else{
-    timestamp <- data$timestamp
-    data <- ctmm::as.sf(data)
-    mig_tbl <- migration_det0(data, min_disp=min_disp, max_num_mig=max_num_mig,
-                              min_phase_len=min_phase_len, grid_res=grid_res,
-                              base= base, max_k=max_k)
+    id <- unique(data$individual.local.identifier)
+    if(length(id)==1) mult_anim <- FALSE
   }
-  return(mig_tbl)
+
+  if(!mult_anim){
+    out <- migration_det0(data, min_disp=min_disp, max_num_mig=max_num_mig,
+                          min_phase_len=min_phase_len, grid_res=grid_res,
+                          base=base, max_k=max_k)
+    return(out)
+  } else {
+    out <- tibble(individual.local.identifier = id, migr_tbl=vector("list",length(id)))
+    for(i in 1:nrow(out)){
+      data_id <- filter(data, individual.local.identifier==id[[i]])
+      out$migr_tbl[[i]] <- migration_det0(data_id, min_disp=min_disp, max_num_mig=max_num_mig,
+                                          min_phase_len=min_phase_len, grid_res=grid_res,
+                                          base=base, max_k=max_k)
+    }
+    return(out)
+  }
 }
 
 
@@ -51,7 +57,7 @@ migration_det <- function(data, min_disp, max_num_mig=1, min_phase_len=3,
 migration_det0 <- function(data, min_disp, max_num_mig=1, min_phase_len=3,
                            grid_res="day",
                            base="first", max_k=100){
-  migr_evt <- phase <- datetime <- disp_rate <- NULL
+  migr_evt <- phase <- timestamp <- disp_rate <- NULL
   if(base=="first"){
     base <- data[1,] %>% st_geometry()
   } else if(base=="last"){
@@ -74,9 +80,9 @@ migration_det0 <- function(data, min_disp, max_num_mig=1, min_phase_len=3,
   suppressWarnings(dfit <- mgcv::gam(dist~s(time, k=k, bs='ad'), data=ddd, method='REML'))
   grid1 <- floor_date(min(ddd$timestamp), grid_res)
   grid2 <- ceiling_date(max(ddd$timestamp), grid_res)
-  newdata <- data.frame(datetime = seq(grid1, grid2, grid_res))
+  newdata <- data.frame(timestamp = seq(grid1, grid2, grid_res))
   newdata$time <- with(newdata,
-                       as.numeric(datetime)/as.numeric(duration(1, grid_res))
+                       as.numeric(timestamp)/as.numeric(duration(1, grid_res))
   )
   X <- predict(dfit, newdata=newdata, type="lpmatrix")
   der <- diff(X%*%coef(dfit))
@@ -104,8 +110,8 @@ migration_det0 <- function(data, min_disp, max_num_mig=1, min_phase_len=3,
   newdata$phase <-with(rle(newdata$migr_evt), rep(seq_along(values), lengths))
   summ <- group_by(newdata, migr_evt, phase) %>%
     summarize(
-      start = min(datetime),
-      end = max(datetime),
+      start = min(timestamp),
+      end = max(timestamp),
       avg_disp_rate = mean(disp_rate, na.rm=TRUE),
       .groups="drop"
     ) %>% arrange(phase)
@@ -115,6 +121,8 @@ migration_det0 <- function(data, min_disp, max_num_mig=1, min_phase_len=3,
   summ$phase <- factor(summ$phase)
 
   attr(summ, "base") <- base
+
+  # class(summ) <- c(class(summ),"migr_tbl")
 
   return(summ)
 }

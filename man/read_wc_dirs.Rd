@@ -9,7 +9,7 @@ read_wc_dirs(x, remove_duplicates = TRUE)
 \arguments{
 \item{x}{Directory containing the individual telemetry data directories.}
 
-\item{remove_duplicates}{Locgical. Should observations with duplicated times be removed? The observation
+\item{remove_duplicates}{Logical. Should observations with duplicated times be removed? The observation
 with the highest quality will be retained.}
 }
 \description{

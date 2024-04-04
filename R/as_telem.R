@@ -1,57 +1,82 @@
 #' @title Convert Wildlife Computers data imported with
 #' `\link[ctmmUtils]{read_wc_dirs}` to a `telemetry` object from the
 #' `ctmm` package.
-#' @param locs_df A data frame output by the function `\link[ctmmUtils]{read_wc_dirs}`
+#' @param x An sf data frame output by the function `\link[ctmmUtils]{read_wc_dirs}`.
 #' @param ... Additional arguments to be passed to `\link{ctmm}{as.temeletry}`
 #' @author Josh M. London, Devin S. Johnson
 #' @import dplyr
 #' @importFrom tibble tibble
 #' @importFrom ctmm as.telemetry uere<-
 #' @importFrom tidyr nest
+#'
 #' @export
-as_telem <- function(locs_df,...) {
-  type <- deploy_id <- datetime <- longitude <- latitude <- error_ellipse_orientation <-
-    error_semi_minor_axis <- error_semi_major_axis <- quality <- data <- NULL
-  # if(is.null(projection)){
-  #   locs_sf <- st_as_sf(locs_df, coords=c("longitude","latitude"), crs=4326)
-  #   prj <- crsuggest::suggest_crs(locs_sf)$crs_proj4[[1]]
-  #   message("Using projection: ", prj)
-  #   rm(locs_sf)
-  # } else if(projection=="ctmm_default"){
-  #   warning("Using {ctmm} default projections. This will result in a potentially different projection for each animal!")
-  #   prj <- NULL
-  # } else{
-  #   prj <- projection
-  # }
-  # separate fastloc and argos
-  locs_f <- locs_df |> filter(type%in%c("FastGPS","known")) |> rm_dup()
-  locs_a <- locs_df |> filter(type=="Argos") |> rm_dup()
-  rm(locs_df)
+as_telem <- function(x,...){
+  type <- individual.local.identifier <- timestamp  <- NULL
 
-  # rename for movebank conventions and convert
-  locs_a <- locs_a |>
-    rename(
-      individual.local.identifier = deploy_id,
-      timestamp = datetime,
-      location.long = longitude,
-      location.lat = latitude,
-      Argos.orientation = error_ellipse_orientation,
-      Argos.semi.minor = error_semi_minor_axis,
-      Argos.semi.major = error_semi_major_axis
-    ) %>% mutate(
-      Argos.location.class = quality,
-      quality = as.character(quality)
-    )
-  locs_a <- ctmm::as.telemetry(object = locs_a, ...)
-  locs_a <- tibble(deploy_id=names(locs_a), telem=locs_a)
+  # browser()
 
-  locs_f <- locs_f |>
-    rename(
-      individual.local.identifier = deploy_id,
-      timestamp = datetime,
-      location.long = longitude,
-      location.lat = latitude
-    ) %>% mutate(
+  xargs <- list(...)
+  if(!inherits(x, "sf")) stop("'x' not an {sf} data frame.")
+  if(!st_is_longlat(x)){
+    prj <- st_crs(x)$proj4string
+    if(!is.null(xargs$projection)){
+      message("\nAdditionally provided projection will override the current projection of the data.\n\n")
+    } else{
+      xargs$projection <- prj
+    }
+  } else{
+    if(is.null(xargs$projection)) stop("A projection must be provided.")
+  }
+
+  x <- st_drop_geometry(x)
+
+  mult_anim <- TRUE
+  if(!"individual.local.identifier" %in% colnames(x)){
+    mult_anim <- FALSE
+  } else{
+    id <- unique(x$individual.local.identifier)
+    if(length(id)==1) mult_anim <- FALSE
+  }
+
+  if(!mult_anim){
+    out <- as_telem0(x, xargs)
+  } else{
+    out <- tibble(individual.local.identifier = id, telem=vector("list",length(id)))
+    for(i in 1:nrow(out)){
+      locs_id <- filter(x, individual.local.identifier==id[[i]])
+      out$telem[[i]] <- as_telem0(locs_id, xargs)
+    }
+  }
+  return(out)
+}
+
+#' @importFrom ctmm as.telemetry tbind
+as_telem0 <- function(x, xargs) {
+  type <- NULL
+  x$individual.local.identifier <- 0
+  lv_quality <- levels(x$quality)
+  x$quality <- as.character(x$quality)
+  x <- rm_dup0(x)
+
+  locs_f <- x |> filter(type%in%c("FastGPS","known"))
+  locs_a <- x |> filter(type=="Argos")
+  rm(x)
+
+  if(nrow(locs_a)>0){
+    locs_a <- locs_a |> st_drop_geometry()
+    has_argos_mix <-  any(!is.na(locs_a$Argos.semi.major)) & any(is.na(locs_a$Argos.semi.major))
+    if(has_argos_mix){
+      locs_a_kf <- filter(locs_a, !is.na(locs_a$Argos.semi.major))
+      locs_a_kf <- do.call(ctmm::as.telemetry, c(list(object=locs_a_kf), xargs))
+      locs_a_dop <- filter(locs_a, is.na(locs_a$Argos.semi.major))
+      locs_a_dop<- do.call(ctmm::as.telemetry, c(list(object=locs_a_dop), xargs))
+      locs_a <- ctmm::tbind(locs_a_dop, locs_a_kf)
+    } else{
+      locs_a <- do.call(ctmm::as.telemetry, c(list(object=locs_a), xargs))
+    }
+  }
+  if(nrow(locs_f)>0){
+    locs_f <- locs_f %>% st_drop_geometry() %>% mutate(
       HDOP = dplyr::case_when(
         type == "known" ~ sqrt(2),
         type=="FastGPS" & quality=="4" ~ sqrt(2)*(1163)/20,
@@ -63,20 +88,19 @@ as_telem <- function(locs_df,...) {
         type=="FastGPS" & quality=="10" ~ sqrt(2)*(24)/20,
         type=="FastGPS" & quality=="11" ~ sqrt(2),
         TRUE ~ Inf
-      ),
-      quality = as.character(quality)
+      )
     )
-  locs_f <- ctmm::as.telemetry(object = locs_f, ...)
-  uere(locs_f) <- 20
-  locs_f <- tibble(deploy_id=names(locs_f), telem=locs_f)
+    locs_f <- do.call(ctmm::as.telemetry, c(list(object=locs_f), xargs))
+    uere(locs_f) <- 20
+  }
 
+  if(nrow(locs_a)>0 & nrow(locs_f)>0) out <-suppressWarnings(tbind(locs_a, locs_f))
+  if(nrow(locs_a)==0) out <- locs_f
+  if(nrow(locs_f)==0) out <- locs_a
 
-  locs_df <- bind_rows(locs_a, locs_f) |> group_by(deploy_id) |> nest()
-  locs_df <- locs_df |> rowwise() |> mutate(
-    data = list(data$telem |> ctmm::tbind())
-  )
+  if("quality"%in%colnames( out)){
+    out$quality <- factor(out$quality, levels=lv_quality)
+  }
 
-  names(locs_df$data) <- locs_df$deploy_id
-
-  return(locs_df$data)
+  return(out)
 }

@@ -22,7 +22,7 @@ e.g. 10 for a 10km dispersion minimum.}
 
 \item{max_num_mig}{The maximum number of migration intervals.}
 
-\item{min_phase_len}{The mimimum length of time that a migration or non-migration event
+\item{min_phase_len}{The minimum length of time that a migration or non-migration event
 will take, e.g., 7 implies a minimum of 7 time intervals for a phase.}
 
 \item{grid_res}{The temporal resolution at which migrations are detected. e.g., "day" (default) implies migration

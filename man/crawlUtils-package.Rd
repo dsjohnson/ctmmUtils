@@ -2,6 +2,8 @@
 % Please edit documentation in R/ctmmUtils-package.R
 \docType{package}
 \name{crawlUtils-package}
+\alias{ctmmUtils}
+\alias{ctmmUtils-package}
 \alias{crawlUtils-package}
 \alias{crawlUtils}
 \title{Functions To Increase Usability Of The \code{ctmm} Package}
@@ -12,8 +14,8 @@ for analysis of animal telemetry data.
 \tabular{ll}{
 Package: \tab crawlUtils\cr
 Type: \tab Package\cr
-Version: \tab 0.0.0.9002\cr
-Date: \tab June 9, 2023\cr
+Version: \tab 0.0.0.9006\cr
+Date: \tab April 4, 2024\cr
 License: \tab CC0 \cr
 LazyLoad: \tab yes\cr
 }
