@@ -13,6 +13,7 @@
 #' @export
 #'
 ouf_ess <- function(x, times){
+  if(inherits(x, "list") & "ess"%in%names(x)) stop("ESS has been calculated for this model fit already. See 'x$ess'")
   if(!inherits(x, "ctmm")) stop("'x' must be a 'ctmm' object.")
   if(inherits(times, "telemetry")) times <- times$timestamp
   if(!inherits(times, "POSIXct")) stop("'times' must be a POSIX vector or 'telemetry' data object.")
