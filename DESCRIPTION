@@ -1,8 +1,8 @@
 Package: ctmmUtils
 Type: Package
 Title: Auxillary functions for using the {ctmm} package efficiently
-Version: 0.0.0.9006
-Date: 2024-04-04
+Version: 0.0.0.9007
+Date: 2024-04-11
 Authors@R: c(
   person("Devin S.", "Johnson", email = "devin.johnson@noaa.gov",role = c("aut", "cre")),
   person("Josh", "London", email = "josh.london@noaa.gov", role = c("aut"))
@@ -16,7 +16,7 @@ Encoding: UTF-8
 LazyData: true
 RoxygenNote: 7.3.1
 Imports: dplyr, lubridate, ctmm, janitor, tibble, tidyr, trip, readr, methods,
-  mgcv, sf, units, utils, plotly, ggplot2, fuzzyjoin
+  mgcv, sf, units, utils, plotly, ggplot2, fuzzyjoin, progressr, doFuture, foreach
 Suggests: pathroutr
 Remotes: 
   jmlondon/pathroutr
