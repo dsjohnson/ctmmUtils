@@ -4,10 +4,10 @@
 #' for analysis of animal telemetry data.
 #'
 #' \tabular{ll}{
-#' Package: \tab crawlUtils\cr
+#' Package: \tab ctmmUtils\cr
 #' Type: \tab Package\cr
-#' Version: \tab 0.0.0.9007\cr
-#' Date: \tab April 11, 2024\cr
+#' Version: \tab 0.0.0.9100\cr
+#' Date: \tab October 29, 2024\cr
 #' License: \tab CC0 \cr
 #' LazyLoad: \tab yes\cr
 #' }
@@ -22,8 +22,8 @@
 #' been made to insure the highest quality, tools such as this are under
 #' constant development and are subject to change.
 #'
-#' @name crawlUtils-package
-#' @aliases crawlUtils-package crawlUtils
+#' @name ctmmUtils-package
+#' @aliases ctmmUtils
 #' @author Devin S. Johnson and Josh M. London
 #' Maintainer: Devin S. Johnson <devin.johnson@@noaa.gov>
 #'

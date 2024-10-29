@@ -11,7 +11,7 @@ as_telem(x, ...)
 \arguments{
 \item{x}{An sf data frame output by the function `\link[ctmmUtils]{read_wc_dirs}`.}
 
-\item{...}{Additional arguments to be passed to `\link{ctmm}{as.temeletry}`}
+\item{...}{Additional arguments to be passed to `\link[ctmm]{as.telemetry}`}
 }
 \description{
 Convert Wildlife Computers data imported with

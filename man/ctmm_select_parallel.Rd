@@ -4,20 +4,13 @@
 \alias{ctmm_select_parallel}
 \title{Parallel fitting of ctmm OUF family models}
 \usage{
-ctmm_select_parallel(tdata, add_ess = FALSE, ...)
+ctmm_select_parallel(tdata, ...)
 }
 \arguments{
 \item{tdata}{A list of telemetry data objects.}
-
-\item{add_ess}{Calculated "mutual information" and "regression" effective sample sizes and weights from
-Bartoszek (2016).}
 
 \item{...}{Additional arguments (besides `data` and `CTMM`!) passed to `\link[ctmm]{ctmm.select}`}
 }
 \description{
 Parallel fitting of ctmm OUF family models
-}
-\references{
-Bartoszek, K. (2016). Phylogenetic effective sample size.
-Journal of Theoretical Biology, 407, 371-386.  (See https://arxiv.org/pdf/1507.07113.pdf).
 }

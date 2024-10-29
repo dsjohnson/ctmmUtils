@@ -13,7 +13,7 @@ ouf_corfun <- function(x){
   sss <- summary(x)
   is_iid <- sss$name %in%  c("IID anisotropic", "IID")
   is_ou <- sss$name %in%  c("OU anisotropic", "OU")
-  is_ouf <- sss$name %in%  c("OUF anisotropic", "OUF", "OUf anisotropic", "OUf")
+  is_ouf <- sss$name %in%  c("OUF anisotropic", "OUF")
   if(!(is_ou | is_ouf | is_iid)) stop("'",paste0(sss$name), "' model not currently supported with this function.")
   if(is_iid){
     foo <- function(s,t){1.0*(s==t)}
@@ -32,15 +32,19 @@ ouf_corfun <- function(x){
     tau_p <- x$tau[[1]]
     tau_v <- x$tau[[2]]
     if(tau_v<1.0e-8 & tau_p>1.0e-8){
-      warning("OUF(f) model seems to be approx. OU, using OU correlation function!")
+      warning("OUF model seems to be approx. OU, using OU correlation function!")
       foo <- function(s, t){exp(-abs(t-s)/tau_p)}
       attr(foo, "tau") <- c(tau_p, 0)
     } else if(tau_v<1.0e-8 & tau_p<1.0e-8){
-      warning("OUF(f) model seems to be approx. IID, using IID correlation function!")
+      warning("OUF model seems to be approx. IID, using IID correlation function!")
       foo <- function(s,t){1.0*(s==t)}
       attr(foo, "tau") <- c(0,0)
     } else{
-      stop("OUF seems to be occilitory, i.e, tau_v > tau_p.")
+      foo <- function(s,t){
+        if(tau_v >= tau_p) stop("tau_v >= tau_p")
+        (tau_p*exp(-abs(t-s)/tau_p) - tau_v*exp(-abs(t-s)/tau_v))/(tau_p-tau_v)
+      }
+      attr(foo, "tau") <- c(tau_p,tau_v)
     }
   }
   return(foo)

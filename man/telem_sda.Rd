@@ -9,8 +9,8 @@ telem_sda(data, ..., filter = TRUE)
 \arguments{
 \item{data}{`telemetry` data object from the `ctmm` package.}
 
-\item{...}{Additional arguments for the `link[trip]{sda}` function. The argument `smax` (in km/hr) is
-necessary. Please see the `link[trip]{sda}` documentation.}
+\item{...}{Additional arguments for the `\link[trip]{sda}` function. The argument `smax` (in km/hr) is
+necessary. Please see the `\link[trip]{sda}` documentation.}
 
 \item{filter}{Logical. Remove locations determined to be outliers based on the SDA filter. If `filter=FALSE` then a
 column named `keep` will indicate which observations should be kept, but all will remain in the data. The default is

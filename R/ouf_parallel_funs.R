@@ -1,31 +1,31 @@
 #' @title Parallel fitting of ctmm OUF family models
 #' @param tdata A list of telemetry data objects.
-#' @param add_ess Calculated "mutual information" and "regression" effective sample sizes and weights from
-#' Bartoszek (2016).
 #' @param ... Additional arguments (besides `data` and `CTMM`!) passed to `\link[ctmm]{ctmm.select}`
 #' @importFrom progressr progressor
-#' @importFrom ctmm ctmm.guess ctmm.select
+#' @importFrom ctmm ctmm.guess ctmm.select ctmm
 #' @import foreach doFuture
-#' @references Bartoszek, K. (2016). Phylogenetic effective sample size.
-#' Journal of Theoretical Biology, 407, 371-386.  (See https://arxiv.org/pdf/1507.07113.pdf).
-
 #' @export
-ctmm_select_parallel <- function(tdata, add_ess=FALSE, ...){
+ctmm_select_parallel <- function(tdata, ...){
   i <- NULL
   xargs <- list(...)
-  verbose <- ifelse(!is.null(xargs$verbose), xargs$verbose, FALSE)
-  if(verbose & add_ess) stop("Currently cannot set 'verbose=TRUE' and 'add_ess=TRUE'")
+  arg_verbose <- ifelse(!is.null(xargs$verbose), xargs$verbose, FALSE)
+  if(arg_verbose & add_ess){
+    add_ess <- FALSE
+    warning("Currently cannot calculate ESS for multiple models. Skipping ESS calculation.")
+  }
   progressr::handlers(global = TRUE)
   p <- progressr::progressor(length(tdata))
   out <- foreach(i=1:length(tdata),
-                 .options.future = list(seed = TRUE),
-                 .errorhandling = "pass") %dofuture% {
-                   guess <- ctmm.guess(tdata[[i]], interactive=FALSE)
-                   suppressWarnings(fit <- ctmm.select(tdata[[i]], guess, ...))
-                   if(add_ess){
-                     ess <- ouf_ess(fit, tdata[[i]])
-                     fit <- list(fit=fit, ess=ess)
-                   }
+                 .options.future = list(seed = TRUE),.errorhandling = "pass") %dofuture% {
+                   guess <- ctmm.guess(tdata[[i]], ctmm(error=TRUE), interactive=FALSE)
+                   fit <- ctmm.select(tdata[[i]], guess,...)
+                   # if(add_ess){
+                   #   sum_fit <- summary(fit)
+                   #   include <- c("IID","OU","OUF","IID anisotropic","OU anisotropic","OUF anisotropic")
+                   #   fit <- fit[c(1:nrow(sum_fit))[rownames(sum_fit) %in% include]][[1]]
+                   #   ess <- ouf_ess(fit, tdata[[i]])
+                   #   fit <- list(fit=fit, ess=ess)
+                   # }
                    p()
                    fit
                  }

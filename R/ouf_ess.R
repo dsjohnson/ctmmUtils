@@ -30,9 +30,10 @@ ouf_ess <- function(x, times){
     log_det_R <- as.numeric(determinant(R,logarithm = TRUE)$modulus)
     log_det_Sig0 <- as.numeric(determinant(Sig0,logarithm = TRUE)$modulus)
     n_mi <-  1 + (n-1)/log(exp(1) - log_det_R)
+    # n_mi <- 1 + (n-1)/(1 + soft_plus(- log_det_R))
     Vi <- kronecker(solve(R), solve(Sig0))
     Vid <- fatdiag(Vi,2)
-    w <- 1/n + (n-1)*exp(sapply(Vid, \(x) -as.numeric(determinant(x, logarithm = TRUE)$modulus)) - log_det_Sig0)/n
+    w <- 1/n + (n-1)*exp(sapply(Vid, \(x)  - log_det_Sig0 - as.numeric(determinant(x, logarithm = TRUE)$modulus)))/n
     n_r <- sum(w)
     w <- w/n_r
     out <- list(N_mi = n_mi, N_r=n_r, w=w)
@@ -41,6 +42,9 @@ ouf_ess <- function(x, times){
   return(out)
 }
 
+soft_plus <- function(x, a=1){
+  max(0,x) + log1p(exp(-abs(a*x)))/a
+}
 
 fatdiag <- function(M,size){
   if((nrow(M)%%size != 0) |  (ncol(M)%%size != 0)) stop("nrow(M) and/or ncol(M) is not an even multiple of 'size'.")

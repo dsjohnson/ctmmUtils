@@ -11,31 +11,33 @@
 #' @importFrom readr read_csv
 
 read_wc_dirs <- function(x, remove_duplicates=TRUE){
-  #
+
   Longitude <- Latitude <- quality <- deploy_id <- datetime <- longitude <- latitude <-
     error_ellipse_orientation <- error_semi_minor_axis <- error_semi_major_axis <-
     type <- location.long <- location.lat <- NULL
-
   # Determine which file to load for each animal:
   dirs <- list.dirs(x)[-1]
-  nms1 <- paste0(list.dirs(x, full.names=FALSE)[-1],
-                 "-1-Locations.csv"
-  )
-  loc_file1 <- paste(dirs, nms1, sep="/")
-  nms2 <- paste0(list.dirs(x, full.names=FALSE)[-1],
-                 "-Locations.csv"
-  )
-  loc_file2 <- paste(dirs, nms2, sep="/")
-
-  # Container for file names
-  loc_file <- ifelse(file.exists(loc_file1), loc_file1, loc_file2)
 
   # Read in data and combine into single table
   # There are 2 animals with no location data
   locs <- NULL
-  for(i in 1:length(loc_file)){
-    if(!file.exists(loc_file[i])) next
-    id_data <- readr::read_csv(loc_file[i], show_col_types=FALSE) %>%
+  no_dat <- NULL
+  for(i in 1:length(dirs)){
+    loc_paths <- list.files(dirs[[i]], pattern="*-Locations.csv")
+    if(length(loc_paths)==0){
+      no_dat <- c(no_dat, dirs[[i]])
+      next
+    }
+    if(length(loc_paths)==1){
+      loc_file <- loc_paths[[1]]
+    } else{
+      loc_paths <- strsplit(loc_paths,"-")
+      loc_paths <- loc_paths[sapply(loc_paths, "length")>2]
+      run <- as.numeric(sapply(loc_paths, \(x) x[[2]]))
+      loc_file <- paste(loc_paths[run==max(run)][[1]], collapse="-")
+    }
+    loc_file <- paste0(dirs[[i]],"/",loc_file)
+    id_data <- readr::read_csv(loc_file, show_col_types=FALSE) %>%
       filter(!is.na(Latitude), !is.na(Longitude))
     time <- parse_date_time(id_data$Date,"%H:%M:%S %d-%b-%Y", quiet=TRUE)
     if(all(is.na(time))){
@@ -58,8 +60,10 @@ read_wc_dirs <- function(x, remove_duplicates=TRUE){
     id_data <- janitor::clean_names(id_data)
     locs <- bind_rows(locs, id_data)
   }
+
   locs <- locs |> mutate(
-    quality = factor(quality, levels=c(as.character(11:0),"A","B","Z"))
+    quality = factor(quality, levels=c(as.character(11:0),"A","B","Z")),
+    high_qual = ifelse(!quality %in% c("4","0","A","B","Z"), 1, 0)
   )
 
   # rename for as.telemetry
@@ -82,8 +86,12 @@ read_wc_dirs <- function(x, remove_duplicates=TRUE){
 
   locs <- st_as_sf(locs, coords = c("x","y"), crs=4326)
 
+  if(!is.null(no_dat)){
+    www <- paste0("There are individuals without location data files: \n", paste(no_dat, "\n", collapse = ""))
+    warning(www, immediate. = TRUE)
+  }
 
-return(locs)
+  return(locs)
 }
 
 

@@ -2,7 +2,7 @@
 #' `\link[ctmmUtils]{read_wc_dirs}` to a `telemetry` object from the
 #' `ctmm` package.
 #' @param x An sf data frame output by the function `\link[ctmmUtils]{read_wc_dirs}`.
-#' @param ... Additional arguments to be passed to `\link{ctmm}{as.temeletry}`
+#' @param ... Additional arguments to be passed to `\link[ctmm]{as.telemetry}`
 #' @author Josh M. London, Devin S. Johnson
 #' @import dplyr
 #' @importFrom tibble tibble
