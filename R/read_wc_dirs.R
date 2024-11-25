@@ -4,17 +4,19 @@
 #' @param x Directory containing the individual telemetry data directories.
 #' @param remove_duplicates Logical. Should observations with duplicated times be removed? The observation
 #' with the highest quality will be retained.
+#' @param default_ellipse Logical. Should a default set of Argos error ellipse values be added for `FastGPS` and `Argos` doppler locations?
+#' See `\link[ctmmUtils]{set_default_ellipses}` for further information.
 #' @export
 #' @author Devin S. Johnson, Josh M. London
 #' @import lubridate dplyr sf
 #' @importFrom janitor clean_names
 #' @importFrom readr read_csv
 
-read_wc_dirs <- function(x, remove_duplicates=TRUE){
+read_wc_dirs <- function(x, remove_duplicates=TRUE, default_ellipse=TRUE){
 
   Longitude <- Latitude <- quality <- deploy_id <- datetime <- longitude <- latitude <-
     error_ellipse_orientation <- error_semi_minor_axis <- error_semi_major_axis <-
-    type <- location.long <- location.lat <- NULL
+    type <- location.long <- location.lat <- error_radius <- NULL
   # Determine which file to load for each animal:
   dirs <- list.dirs(x)[-1]
 
@@ -73,6 +75,7 @@ read_wc_dirs <- function(x, remove_duplicates=TRUE){
       timestamp = datetime,
       location.long = longitude,
       location.lat = latitude,
+      Argos.error.radius = error_radius,
       Argos.orientation = error_ellipse_orientation,
       Argos.semi.minor = error_semi_minor_axis,
       Argos.semi.major = error_semi_major_axis
@@ -83,6 +86,8 @@ read_wc_dirs <- function(x, remove_duplicates=TRUE){
     )
 
   if(remove_duplicates) locs <- rm_dup(locs)
+  locs <- locs[locs$quality!="Z",]
+  if(default_ellipse) locs <- set_default_ellipses(locs)
 
   locs <- st_as_sf(locs, coords = c("x","y"), crs=4326)
 

@@ -12,8 +12,8 @@ for analysis of animal telemetry data.
 \tabular{ll}{
 Package: \tab ctmmUtils\cr
 Type: \tab Package\cr
-Version: \tab 0.0.0.9100\cr
-Date: \tab October 29, 2024\cr
+Version: \tab 0.0.0.9103\cr
+Date: \tab November 22, 2024\cr
 License: \tab CC0 \cr
 LazyLoad: \tab yes\cr
 }

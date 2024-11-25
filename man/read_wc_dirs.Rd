@@ -4,13 +4,16 @@
 \alias{read_wc_dirs}
 \title{Read individual telemetry data from Wildlife Computers portal directories}
 \usage{
-read_wc_dirs(x, remove_duplicates = TRUE)
+read_wc_dirs(x, remove_duplicates = TRUE, default_ellipse = TRUE)
 }
 \arguments{
 \item{x}{Directory containing the individual telemetry data directories.}
 
 \item{remove_duplicates}{Logical. Should observations with duplicated times be removed? The observation
 with the highest quality will be retained.}
+
+\item{default_ellipse}{Logical. Should a default set of Argos error ellipse values be added for `FastGPS` and `Argos` doppler locations?
+See `\link[ctmmUtils]{set_default_ellipses}` for further information.}
 }
 \description{
 Read and combine data downloaded from Wildlife Computers portal

@@ -5,11 +5,10 @@
 #' @param ... Additional arguments to be passed to `\link[ctmm]{as.telemetry}`
 #' @author Josh M. London, Devin S. Johnson
 #' @import dplyr
-#' @importFrom tibble tibble
-#' @importFrom ctmm as.telemetry uere<-
-#' @importFrom tidyr nest
+#' @importFrom ctmm as.telemetry
 #'
 #' @export
+
 as_telem <- function(x,...){
   type <- individual.local.identifier <- timestamp  <- NULL
 
@@ -30,77 +29,51 @@ as_telem <- function(x,...){
 
   x <- st_drop_geometry(x)
 
-  mult_anim <- TRUE
-  if(!"individual.local.identifier" %in% colnames(x)){
-    mult_anim <- FALSE
+  if("individual.local.identifier" %in% colnames(x)){
+    x <- split(x, x$individual.local.identifier)
+    tdata <- lapply(x, as_telem0, xargs=xargs)
+    names(tdata) <- names(x)
   } else{
-    id <- unique(x$individual.local.identifier)
-    if(length(id)==1) mult_anim <- FALSE
+    tdata <- as_telem0(x,xargs)
   }
 
-  if(!mult_anim){
-    out <- as_telem0(x, xargs)
-  } else{
-    out <- tibble(individual.local.identifier = id, telem=vector("list",length(id)))
-    for(i in 1:nrow(out)){
-      locs_id <- filter(x, individual.local.identifier==id[[i]])
-      out$telem[[i]] <- as_telem0(locs_id, xargs)
-    }
-  }
-  return(out)
+  if(inherits(tdata, "list") && length(tdata)==1) tdata <- tdata[[1]]
+
+  return(tdata)
 }
 
-#' @importFrom ctmm as.telemetry tbind
-as_telem0 <- function(x, xargs) {
-  type <- NULL
-  x$individual.local.identifier <- 0
-  lv_quality <- levels(x$quality)
-  x$quality <- as.character(x$quality)
-  x <- rm_dup0(x)
 
-  locs_f <- x |> filter(type%in%c("FastGPS","known"))
-  locs_a <- x |> filter(type=="Argos")
-  rm(x)
 
-  if(nrow(locs_a)>0){
-    locs_a <- locs_a |> st_drop_geometry()
-    has_argos_mix <-  any(!is.na(locs_a$Argos.semi.major)) & any(is.na(locs_a$Argos.semi.major))
-    if(has_argos_mix){
-      locs_a_kf <- filter(locs_a, !is.na(locs_a$Argos.semi.major))
-      locs_a_kf <- do.call(ctmm::as.telemetry, c(list(object=locs_a_kf), xargs))
-      locs_a_dop <- filter(locs_a, is.na(locs_a$Argos.semi.major))
-      locs_a_dop<- do.call(ctmm::as.telemetry, c(list(object=locs_a_dop), xargs))
-      locs_a <- ctmm::tbind(locs_a_dop, locs_a_kf)
-    } else{
-      locs_a <- do.call(ctmm::as.telemetry, c(list(object=locs_a), xargs))
-    }
-  }
-  if(nrow(locs_f)>0){
-    locs_f <- locs_f %>% st_drop_geometry() %>% mutate(
-      HDOP = dplyr::case_when(
-        type == "known" ~ sqrt(2),
-        type=="FastGPS" & quality=="4" ~ sqrt(2)*(1163)/20,
-        type=="FastGPS" & quality=="5" ~ sqrt(2)*(169)/20,
-        type=="FastGPS" & quality=="6" ~ sqrt(2)*(71)/20,
-        type=="FastGPS" & quality=="7" ~ sqrt(2)*(43)/20,
-        type=="FastGPS" & quality=="8" ~ sqrt(2)*(34)/20,
-        type=="FastGPS" & quality=="9" ~ sqrt(2)*(28)/20,
-        type=="FastGPS" & quality=="10" ~ sqrt(2)*(24)/20,
-        type=="FastGPS" & quality=="11" ~ sqrt(2),
-        TRUE ~ Inf
-      )
-    )
-    locs_f <- do.call(ctmm::as.telemetry, c(list(object=locs_f), xargs))
-    uere(locs_f) <- 20
-  }
 
-  if(nrow(locs_a)>0 & nrow(locs_f)>0) out <-suppressWarnings(tbind(locs_a, locs_f))
-  if(nrow(locs_a)==0) out <- locs_f
-  if(nrow(locs_f)==0) out <- locs_a
 
-  if("quality"%in%colnames( out)){
-    out$quality <- factor(out$quality, levels=lv_quality)
-  }
-
-  return(out)
+as_telem0 <- function(x0, xargs){
+  covs <- argosDiag2Cov(x0$Argos.semi.major, x0$Argos.semi.minor, x0$Argos.orientation)
+  covs <- zapsmall(covs)
+  tdata0 <- do.call(ctmm::as.telemetry, c(list(object=x0), xargs))
+  tdata0$COV.x.x <- covs$Cov.x.x
+  tdata0$COV.x.y <- covs$Cov.x.y
+  tdata0$COV.y.y <- covs$Cov.y.y
+  return(tdata0)
 }
+
+
+argosDiag2Cov <- function(Major, Minor, Orientation){
+  a <- Major
+  b <- Minor
+  if(any(b<=.Machine$double.eps, na.rm=TRUE)) stop("There are very small (or 0) values for the minor ellipse lengths! These may need to be removed.")
+  theta <- Orientation
+  if(any(theta < 0 | theta > 180, na.rm = TRUE)) stop("Argos diagnostic data orientation outside of [0,180]!")
+  if(any(a < 0, na.rm = TRUE)) stop("Argos diagnostic data major axis < 0!")
+  if(any(b < 0, na.rm = TRUE)) stop("Argos diagnostic data minor axis < 0!")
+  theta <- pi*(theta/180)
+  k <- sqrt(2)
+  v1 <- (a/k)^2*sin(theta)^2 + (b/k)^2*cos(theta)^2
+  v2 <- (a/k)^2*cos(theta)^2 + (b/k)^2*sin(theta)^2
+  c12 <- ((a^2 - b^2)/k^2)*cos(theta)*sin(theta)
+  return(data.frame(Cov.x.x=v1, Cov.x.y=c12, Cov.y.y=v2))
+}
+
+
+
+
+
