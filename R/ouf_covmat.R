@@ -11,9 +11,9 @@
 #'
 ouf_corfun <- function(x){
   sss <- summary(x)
-  is_iid <- sss$name %in%  c("IID anisotropic", "IID")
-  is_ou <- sss$name %in%  c("OU anisotropic", "OU")
-  is_ouf <- sss$name %in%  c("OUF anisotropic", "OUF")
+  is_iid <- sss$name %in%  c("IID anisotropic", "IID", "IID error")
+  is_ou <- sss$name %in%  c("OU anisotropic", "OU", "OU error")
+  is_ouf <- sss$name %in%  c("OUF anisotropic", "OUF", "OUF error")
   if(!(is_ou | is_ouf | is_iid)) stop("'",paste0(sss$name), "' model not currently supported with this function.")
   if(is_iid){
     foo <- function(s,t){1.0*(s==t)}
