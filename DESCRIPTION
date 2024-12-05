@@ -1,8 +1,8 @@
 Package: ctmmUtils
 Type: Package
 Title: Auxillary functions for using the {ctmm} package efficiently
-Version: 0.0.0.9106
-Date: 2024-12-03
+Version: 0.0.0.9107
+Date: 2024-12-05
 Authors@R: c(
   person("Devin S.", "Johnson", email = "devin.johnson@noaa.gov",role = c("aut", "cre")),
   person("Josh", "London", email = "josh.london@noaa.gov", role = c("aut"))

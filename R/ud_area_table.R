@@ -1,7 +1,7 @@
 #' @title Get UD Area Table
-#' @param ud A named list of `ctmm` `UD` objects
+#' @param uds A named list of `ctmm` `UD` objects
 #' @param level.UD A vector of UD levels for computation
-#' @importFrom ctmm summary
+#' @param unit Units for area estimates. Defaults to `unit = "m^2"`
 #' @export
 
 ud_area_table <- function(uds, level.UD=0.95, unit=NULL){
