@@ -8,15 +8,6 @@
 \description{
 This package is a collection of functions that enhance the \code{ctmm} package for
 for analysis of animal telemetry data.
-
-\tabular{ll}{
-Package: \tab ctmmUtils\cr
-Type: \tab Package\cr
-Version: \tab 0.0.0.9106\cr
-Date: \tab December 3, 2024\cr
-License: \tab CC0 \cr
-LazyLoad: \tab yes\cr
-}
 }
 \note{
 This software package is developed and maintained by scientists at the

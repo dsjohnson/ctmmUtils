@@ -4,7 +4,12 @@
 \alias{read_wc_dirs}
 \title{Read individual telemetry data from Wildlife Computers portal directories}
 \usage{
-read_wc_dirs(x, remove_duplicates = TRUE, default_ellipse = TRUE)
+read_wc_dirs(
+  x,
+  remove_duplicates = TRUE,
+  default_ellipse = TRUE,
+  rm_mote = TRUE
+)
 }
 \arguments{
 \item{x}{Directory containing the individual telemetry data directories.}
@@ -14,6 +19,9 @@ with the highest quality will be retained.}
 
 \item{default_ellipse}{Logical. Should a default set of Argos error ellipse values be added for `FastGPS` and `Argos` doppler locations?
 See `\link[ctmmUtils]{set_default_ellipses}` for further information.}
+
+\item{rm_mote}{Logical, default = `TRUE`. If set to `rm_mote = TRUE` the locations that are `type == "Mote"` stations will be
+removed, due to lack of location error information. To force retension, set `rm_mote = FALSE`.}
 }
 \description{
 Read and combine data downloaded from Wildlife Computers portal

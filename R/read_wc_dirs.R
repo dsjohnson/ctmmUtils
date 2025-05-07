@@ -6,13 +6,15 @@
 #' with the highest quality will be retained.
 #' @param default_ellipse Logical. Should a default set of Argos error ellipse values be added for `FastGPS` and `Argos` doppler locations?
 #' See `\link[ctmmUtils]{set_default_ellipses}` for further information.
+#' @param rm_mote Logical, default = `TRUE`. If set to `rm_mote = TRUE` the locations that are `type == "Mote"` stations will be
+#' removed, due to lack of location error information. To force retension, set `rm_mote = FALSE`.
 #' @export
 #' @author Devin S. Johnson, Josh M. London
 #' @import lubridate dplyr sf
 #' @importFrom janitor clean_names
 #' @importFrom readr read_csv
 
-read_wc_dirs <- function(x, remove_duplicates=TRUE, default_ellipse=TRUE){
+read_wc_dirs <- function(x, remove_duplicates=TRUE, default_ellipse=TRUE, rm_mote=TRUE){
 
   Longitude <- Latitude <- quality <- deploy_id <- datetime <- longitude <- latitude <-
     error_ellipse_orientation <- error_semi_minor_axis <- error_semi_major_axis <-
@@ -60,12 +62,16 @@ read_wc_dirs <- function(x, remove_duplicates=TRUE, default_ellipse=TRUE){
     id_data$datetime <- time
     id_data <- select(id_data, -Date)
     id_data <- janitor::clean_names(id_data)
+
+
+
     locs <- bind_rows(locs, id_data)
   }
 
   locs <- locs |> mutate(
-    quality = factor(quality, levels=c(as.character(11:0),"A","B","Z")),
-    high_qual = ifelse(!quality %in% c("4","0","A","B","Z"), 1, 0)
+    quality = ifelse(type=="Mote", "M", quality),
+    quality = factor(quality, levels=c(as.character(11:0),"A","B","Z","M")),
+    high_qual = ifelse(!quality %in% c("4","0","A","B","Z","M"), 1, 0)
   )
 
   # rename for as.telemetry
@@ -85,10 +91,14 @@ read_wc_dirs <- function(x, remove_duplicates=TRUE, default_ellipse=TRUE){
       y = location.lat
     )
 
+  if(any(locs$type=="Mote") & rm_mote) locs <- locs[locs$type!="Mote",]
   if(remove_duplicates) locs <- rm_dup(locs)
   locs <- locs[locs$quality!="Z",]
   if(default_ellipse) locs <- set_default_ellipses(locs)
 
+  locs <- droplevels(locs)
+
+  # if(any(is.na(locs$x)) | any(is.na(locs$y))) browser()
   locs <- st_as_sf(locs, coords = c("x","y"), crs=4326)
 
   if(!is.null(no_dat)){
