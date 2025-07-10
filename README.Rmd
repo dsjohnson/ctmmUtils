@@ -21,7 +21,7 @@ knitr::opts_chunk$set(
 ### Binary
 
 ```{r, eval=FALSE}
-install.packages('ctmmlUtils', repos='https://dsjohnson.r-universe.dev')
+install.packages('ctmmUtils', repos='https://dsjohnson.r-universe.dev')
 ```
 
 ### Source

@@ -7,7 +7,7 @@
 ### Binary
 
 ``` r
-install.packages('ctmmlUtils', repos='https://dsjohnson.r-universe.dev')
+install.packages('ctmmUtils', repos='https://dsjohnson.r-universe.dev')
 ```
 
 ### Source
