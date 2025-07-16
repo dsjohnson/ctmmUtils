@@ -6,6 +6,7 @@
 
 ud_area_table <- function(uds, level.UD=0.95, unit=NULL){
   out <- NULL
+  if(is.null(names(uds))) stop("identifying names must be added to the 'uds' list!")
   for(i in 1:length(uds)){
     for(j in 1:length(level.UD)){
       if(!inherits(uds[[i]], "UD")){
